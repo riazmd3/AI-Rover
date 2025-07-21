@@ -5,7 +5,7 @@ from ultralytics import YOLO
 
 model = YOLO("yolov8_best.pt")
 
-esp32_url = "http://<esp32-ip>/capture"
+esp32_url = "http://10.184.195.84/capture"
 response = requests.get(esp32_url)
 if response.status_code == 200:
     with open("image.jpg", "wb") as f:
