@@ -11,7 +11,7 @@
 
 // Replace with your network credentials
 const char* ssid = "Riazz";
-const char* password = "3456xxxxxx";
+const char* password = "34563456";
 
 #define PART_BOUNDARY "123456789000000000000987654321"
 
@@ -168,18 +168,40 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
   </head>
   <body>
     <h1>ESP32-CAM Robot</h1>
-    <img src="" id="photo" >
+    <img src="" id="photo" style="display:none;">
+    <br>
+    <button class="button" onclick="toggleVideo()">Toggle Video</button>
+    <button class="button" onclick="toggleLED()">Toggle LED</button>
+    </br>
     <table>
       <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('forward');" ontouchstart="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forward</button></td></tr>
       <tr><td align="center"><button class="button" onmousedown="toggleCheckbox('left');" ontouchstart="toggleCheckbox('left');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Left</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('right');" ontouchstart="toggleCheckbox('right');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Right</button></td></tr>
       <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Backward</button></td></tr>                   
     </table>
    <script>
-   function toggleCheckbox(x) {
-     var xhr = new XMLHttpRequest();
-     xhr.open("GET", "/action?go=" + x, true);
-     xhr.send();
-   }
+     let streamOn = false;
+     let ledOn = false;
+      function toggleCheckbox(x) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/action?go=" + x, true);
+        xhr.send();
+      }
+        function toggleVideo() {
+    const img = document.getElementById("photo");
+    if (!streamOn) {
+      img.src = window.location.href.slice(0, -1) + ":81/stream";
+      img.style.display = "block";
+    } else {
+      img.src = "";
+      img.style.display = "none";
+    }
+    streamOn = !streamOn;
+  }
+
+  function toggleLED() {
+    toggleCheckbox(ledOn ? 'led_off' : 'led_on');
+    ledOn = !ledOn;
+  }
    window.onload = document.getElementById("photo").src = window.location.href.slice(0, -1) + ":81/stream";
   </script>
   </body>
@@ -282,7 +304,18 @@ static esp_err_t cmd_handler(httpd_req_t *req){
 
   sensor_t * s = esp_camera_sensor_get();
   int res = 0;
-  
+#define LED_PIN 4  // Adjust if using different GPIO
+
+if (!strcmp(variable, "led_on")) {
+  Serial.println("LED ON");
+  digitalWrite(LED_PIN, HIGH);
+}
+else if (!strcmp(variable, "led_off")) {
+  Serial.println("LED OFF");
+  digitalWrite(LED_PIN, LOW);
+}
+
+
   if(!strcmp(variable, "forward")) {
     Serial.println("Forward");
     digitalWrite(MOTOR_1_PIN_1, 1);
@@ -365,7 +398,9 @@ void startCameraServer(){
 
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
-  
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);  // Start with LED off
+
   pinMode(MOTOR_1_PIN_1, OUTPUT);
   pinMode(MOTOR_1_PIN_2, OUTPUT);
   pinMode(MOTOR_2_PIN_1, OUTPUT);
