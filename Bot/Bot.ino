@@ -175,7 +175,10 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     <button class="button" onclick="toggleVideo()">Toggle Video</button>
     <button class="button" onclick="toggleLED()">Toggle LED</button>
     <button onclick="detectLeaf()">Detect Disease</button>
-    <div id="result"></div>
+    <div id="result-tab" style="margin-top:20px; border:1px solid #ccc; padding:10px; display:block;">
+      <h2>Result</h2>
+      <div id="result-content">No result yet.</div>
+    </div>
 
     </br>
     <table>
@@ -204,26 +207,33 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
   } 
   //Detection 
   function detectLeaf() {
-  fetch("/capture", { method: "GET" })
-    .then(response => response.blob())
-    .then(imageBlob => {
-      const formData = new FormData();
-      formData.append("file", imageBlob, "leaf.jpg");
-      // TODO: Replace <YOUR_PC_IP> with your actual PC IP address running the detection server
-      return fetch("http://<YOUR_PC_IP>:5000/detect", {
-        method: "POST",
-        body: formData
+    fetch("/capture", { method: "GET" })
+      .then(response => response.blob())
+      .then(imageBlob => {
+        const formData = new FormData();
+        formData.append("image", imageBlob, "leaf.jpg");
+        return fetch("http://10.184.195.145:5000/detect", {
+          method: "POST",
+          body: formData
+        });
+      })
+      .then(response => response.json())
+      .then(data => {
+        let html = "";
+        if (data.detections && data.detections.length > 0) {
+          data.detections.forEach(det => {
+            html += `Disease: ${det.disease}<br>Confidence: ${det.confidence}<br><br>`;
+          });
+        } else {
+          html = "No disease detected.";
+        }
+        document.getElementById("result-content").innerHTML = html;
+      })
+      .catch(error => {
+        document.getElementById("result-content").innerHTML = "Detection failed: " + error;
+        console.error("Detection failed:", error);
       });
-    })
-    .then(response => response.json())
-    .then(data => {
-      document.getElementById("result").innerHTML =
-        `Disease: ${data.class}<br>Confidence: ${data.confidence}<br>Remedy: ${data.remedy}`;
-    })
-    .catch(error => {
-      console.error("Detection failed:", error);
-    });
-} 
+  } 
  
   function toggleLED() {
     toggleCheckbox(ledOn ? 'led_off' : 'led_on');
