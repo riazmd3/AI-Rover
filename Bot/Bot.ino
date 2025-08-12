@@ -169,7 +169,7 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     </style>
   </head>
   <body>
-    <h1>ESP32-CAM Robot</h1>
+    <h1>Agri Bot</h1>
     <img src="" id="photo" style="display:none;">
     <br>
     <button class="button" onclick="toggleVideo()">Toggle Video</button>
@@ -212,7 +212,7 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
       .then(imageBlob => {
         const formData = new FormData();
         formData.append("image", imageBlob, "leaf.jpg");
-        return fetch("http://10.184.195.145:5000/detect", {
+        return fetch("http://10.133.183.84:5000/detect", {
           method: "POST",
           body: formData
         });

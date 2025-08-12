@@ -8,7 +8,7 @@ import os
 
 app = Flask(__name__)
 CORS(app)
-model = YOLO("yolov8_best.pt")
+model = YOLO(r"C:\Users\riazm\OneDrive\Desktop\Ai - Rover\Bot\yolov8_best.pt")
 
 @app.route('/detect', methods=['POST'])
 def detect():
