@@ -120,10 +120,10 @@ const char* password = "34563456";
   #error "Camera model not selected"
 #endif
 
-#define MOTOR_1_PIN_1    14
-#define MOTOR_1_PIN_2    15
-#define MOTOR_2_PIN_1    13
-#define MOTOR_2_PIN_2    12
+#define MOTOR_1_PIN_1    12
+#define MOTOR_1_PIN_2    13
+#define MOTOR_2_PIN_1    15
+#define MOTOR_2_PIN_2    14
 
 #define LED_PIN 4  // LED pin for onboard flash or external LED
 
