@@ -351,41 +351,42 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   }
 
 
- if(!strcmp(variable, "forward")) {
+else if(!strcmp(variable, "forward")) {
   Serial.println("Forward");
-  digitalWrite(MOTOR_1_PIN_1, 1);
-  digitalWrite(MOTOR_1_PIN_2, 0);
-  digitalWrite(MOTOR_2_PIN_1, 1);
-  digitalWrite(MOTOR_2_PIN_2, 0);
-}
-else if(!strcmp(variable, "left")) {
-  Serial.println("Left");
-  digitalWrite(MOTOR_1_PIN_1, 0);  // Left motor backward
-  digitalWrite(MOTOR_1_PIN_2, 1);
-  digitalWrite(MOTOR_2_PIN_1, 1);  // Right motor forward
-  digitalWrite(MOTOR_2_PIN_2, 0);
-}
-else if(!strcmp(variable, "right")) {
-  Serial.println("Right");
-  digitalWrite(MOTOR_1_PIN_1, 1);  // Left motor forward
-  digitalWrite(MOTOR_1_PIN_2, 0);
-  digitalWrite(MOTOR_2_PIN_1, 0);  // Right motor backward
-  digitalWrite(MOTOR_2_PIN_2, 1);
+  digitalWrite(MOTOR_1_PIN_1, HIGH);
+  digitalWrite(MOTOR_1_PIN_2, LOW);
+  digitalWrite(MOTOR_2_PIN_1, HIGH);
+  digitalWrite(MOTOR_2_PIN_2, LOW);
 }
 else if(!strcmp(variable, "backward")) {
   Serial.println("Backward");
-  digitalWrite(MOTOR_1_PIN_1, 0);
-  digitalWrite(MOTOR_1_PIN_2, 1);
-  digitalWrite(MOTOR_2_PIN_1, 0);
-  digitalWrite(MOTOR_2_PIN_2, 1);
+  digitalWrite(MOTOR_1_PIN_1, LOW);
+  digitalWrite(MOTOR_1_PIN_2, HIGH);
+  digitalWrite(MOTOR_2_PIN_1, LOW);
+  digitalWrite(MOTOR_2_PIN_2, HIGH);
+}
+else if(!strcmp(variable, "left")) {
+  Serial.println("Left");
+  digitalWrite(MOTOR_1_PIN_1, LOW);
+  digitalWrite(MOTOR_1_PIN_2, HIGH);
+  digitalWrite(MOTOR_2_PIN_1, HIGH);
+  digitalWrite(MOTOR_2_PIN_2, LOW);
+}
+else if(!strcmp(variable, "right")) {
+  Serial.println("Right");
+  digitalWrite(MOTOR_1_PIN_1, HIGH);
+  digitalWrite(MOTOR_1_PIN_2, LOW);
+  digitalWrite(MOTOR_2_PIN_1, LOW);
+  digitalWrite(MOTOR_2_PIN_2, HIGH);
 }
 else if(!strcmp(variable, "stop")) {
   Serial.println("Stop");
-  digitalWrite(MOTOR_1_PIN_1, 0);
-  digitalWrite(MOTOR_1_PIN_2, 0);
-  digitalWrite(MOTOR_2_PIN_1, 0);
-  digitalWrite(MOTOR_2_PIN_2, 0);
+  digitalWrite(MOTOR_1_PIN_1, LOW);
+  digitalWrite(MOTOR_1_PIN_2, LOW);
+  digitalWrite(MOTOR_2_PIN_1, LOW);
+  digitalWrite(MOTOR_2_PIN_2, LOW);
 }
+
   else {
     res = -1;
   }
