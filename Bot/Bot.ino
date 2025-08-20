@@ -1,4 +1,3 @@
-
 #include "esp_camera.h"
 #include <WiFi.h>
 #include "esp_timer.h"
@@ -10,75 +9,14 @@
 #include "esp_http_server.h"
 
 // Replace with your network credentials
-const char* ssid = "Riazz";
+const char* ssid = "Riaz";
 const char* password = "34563456";
 
 #define PART_BOUNDARY "123456789000000000000987654321"
 
 #define CAMERA_MODEL_AI_THINKER
-//#define CAMERA_MODEL_M5STACK_PSRAM
-//#define CAMERA_MODEL_M5STACK_WITHOUT_PSRAM
-//#define CAMERA_MODEL_M5STACK_PSRAM_B
-//#define CAMERA_MODEL_WROVER_KIT
 
-#if defined(CAMERA_MODEL_WROVER_KIT)
-  #define PWDN_GPIO_NUM    -1
-  #define RESET_GPIO_NUM   -1
-  #define XCLK_GPIO_NUM    21
-  #define SIOD_GPIO_NUM    26
-  #define SIOC_GPIO_NUM    27
-  
-  #define Y9_GPIO_NUM      35
-  #define Y8_GPIO_NUM      34
-  #define Y7_GPIO_NUM      39
-  #define Y6_GPIO_NUM      36
-  #define Y5_GPIO_NUM      19
-  #define Y4_GPIO_NUM      18
-  #define Y3_GPIO_NUM       5
-  #define Y2_GPIO_NUM       4
-  #define VSYNC_GPIO_NUM   25
-  #define HREF_GPIO_NUM    23
-  #define PCLK_GPIO_NUM    22
-
-#elif defined(CAMERA_MODEL_M5STACK_PSRAM)
-  #define PWDN_GPIO_NUM     -1
-  #define RESET_GPIO_NUM    15
-  #define XCLK_GPIO_NUM     27
-  #define SIOD_GPIO_NUM     25
-  #define SIOC_GPIO_NUM     23
-  
-  #define Y9_GPIO_NUM       19
-  #define Y8_GPIO_NUM       36
-  #define Y7_GPIO_NUM       18
-  #define Y6_GPIO_NUM       39
-  #define Y5_GPIO_NUM        5
-  #define Y4_GPIO_NUM       34
-  #define Y3_GPIO_NUM       35
-  #define Y2_GPIO_NUM       32
-  #define VSYNC_GPIO_NUM    22
-  #define HREF_GPIO_NUM     26
-  #define PCLK_GPIO_NUM     21
-
-#elif defined(CAMERA_MODEL_M5STACK_WITHOUT_PSRAM)
-  #define PWDN_GPIO_NUM     -1
-  #define RESET_GPIO_NUM    15
-  #define XCLK_GPIO_NUM     27
-  #define SIOD_GPIO_NUM     25
-  #define SIOC_GPIO_NUM     23
-  
-  #define Y9_GPIO_NUM       19
-  #define Y8_GPIO_NUM       36
-  #define Y7_GPIO_NUM       18
-  #define Y6_GPIO_NUM       39
-  #define Y5_GPIO_NUM        5
-  #define Y4_GPIO_NUM       34
-  #define Y3_GPIO_NUM       35
-  #define Y2_GPIO_NUM       17
-  #define VSYNC_GPIO_NUM    22
-  #define HREF_GPIO_NUM     26
-  #define PCLK_GPIO_NUM     21
-
-#elif defined(CAMERA_MODEL_AI_THINKER)
+#if defined(CAMERA_MODEL_AI_THINKER)
   #define PWDN_GPIO_NUM     32
   #define RESET_GPIO_NUM    -1
   #define XCLK_GPIO_NUM      0
@@ -96,36 +34,17 @@ const char* password = "34563456";
   #define VSYNC_GPIO_NUM    25
   #define HREF_GPIO_NUM     23
   #define PCLK_GPIO_NUM     22
-
-#elif defined(CAMERA_MODEL_M5STACK_PSRAM_B)
-  #define PWDN_GPIO_NUM     -1
-  #define RESET_GPIO_NUM    15
-  #define XCLK_GPIO_NUM     27
-  #define SIOD_GPIO_NUM     22
-  #define SIOC_GPIO_NUM     23
-  
-  #define Y9_GPIO_NUM       19
-  #define Y8_GPIO_NUM       36
-  #define Y7_GPIO_NUM       18
-  #define Y6_GPIO_NUM       39
-  #define Y5_GPIO_NUM        5
-  #define Y4_GPIO_NUM       34
-  #define Y3_GPIO_NUM       35
-  #define Y2_GPIO_NUM       32
-  #define VSYNC_GPIO_NUM    25
-  #define HREF_GPIO_NUM     26
-  #define PCLK_GPIO_NUM     21
-
 #else
   #error "Camera model not selected"
 #endif
 
-#define MOTOR_1_PIN_1    12
-#define MOTOR_1_PIN_2    13
-#define MOTOR_2_PIN_1    15
-#define MOTOR_2_PIN_2    14
+#define MOTOR_1_PIN_1    2   // Left Motor IN1
+#define MOTOR_1_PIN_2    13   // Left Motor IN2
+#define MOTOR_2_PIN_1     14  // Right Motor IN3
+#define MOTOR_2_PIN_2    15    // Right Motor IN4
+#define LED_PIN          4    // Flash LED
 
-#define LED_PIN 4  // LED pin for onboard flash or external LED
+String detectionServerIP = "10.133.183.84:5000";  // default detection server IP
 
 static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
 static const char* _STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
@@ -142,30 +61,18 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     <style>
       body { font-family: Arial; text-align: center; margin:0px auto; padding-top: 30px;}
       table { margin-left: auto; margin-right: auto; }
-      td { padding: 8 px; }
+      td { padding: 8px; }
       .button {
         background-color: #2f4468;
         border: none;
         color: white;
         padding: 10px 20px;
         text-align: center;
-        text-decoration: none;
-        display: inline-block;
         font-size: 18px;
         margin: 6px 3px;
         cursor: pointer;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        -khtml-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        -webkit-tap-highlight-color: rgba(0,0,0,0);
       }
-      img {  width: auto ;
-        max-width: 100% ;
-        height: auto ; 
-      }
+      img { width: auto; max-width: 100%; height: auto; }
     </style>
   </head>
   <body>
@@ -175,6 +82,14 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     <button class="button" onclick="toggleVideo()">Toggle Video</button>
     <button class="button" onclick="toggleLED()">Toggle LED</button>
     <button onclick="detectLeaf()">Detect Disease</button>
+
+    <div style="margin-top:20px;">
+      <h3>Detection Server IP</h3>
+      <input type="text" id="server-ip" placeholder="Enter server IP (e.g. 192.168.1.100:5000)">
+      <button onclick="saveIP()">Save IP</button>
+      <p>Current IP: <span id="current-ip">Not set</span></p>
+    </div>
+
     <div id="result-tab" style="margin-top:20px; border:1px solid #ccc; padding:10px; display:block;">
       <h2>Result</h2>
       <div id="result-content">No result yet.</div>
@@ -182,65 +97,93 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
 
     </br>
     <table>
-      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('forward');" ontouchstart="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forward</button></td></tr>
-      <tr><td align="center"><button class="button" onmousedown="toggleCheckbox('left');" ontouchstart="toggleCheckbox('left');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Left</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('right');" ontouchstart="toggleCheckbox('right');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Right</button></td></tr>
-      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Backward</button></td></tr>                   
+      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');">Forward</button></td></tr>
+      <tr>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('left');" onmouseup="toggleCheckbox('stop');">Left</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('stop');">Stop</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('right');" onmouseup="toggleCheckbox('stop');">Right</button></td>
+      </tr>
+      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" onmouseup="toggleCheckbox('stop');">Backward</button></td></tr>                   
     </table>
+
    <script>
      let streamOn = false;
      let ledOn = false;
-      function toggleCheckbox(x) {
+
+     function toggleCheckbox(x) {
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "/action?go=" + x, true);
         xhr.send();
-      }
-        function toggleVideo() {
-    const img = document.getElementById("photo");
-    if (!streamOn) {
-      img.src = window.location.href.slice(0, -1) + ":81/stream";
-      img.style.display = "block";
-    } else {
-      img.src = "";
-      img.style.display = "none";
-    }
-    streamOn = !streamOn;
-  } 
-  //Detection 
-  function detectLeaf() {
-    fetch("/capture", { method: "GET" })
-      .then(response => response.blob())
-      .then(imageBlob => {
-        const formData = new FormData();
-        formData.append("image", imageBlob, "leaf.jpg");
-        return fetch("http://10.133.183.84:5000/detect", {
-          method: "POST",
-          body: formData
-        });
-      })
-      .then(response => response.json())
-      .then(data => {
-        let html = "";
-        if (data.detections && data.detections.length > 0) {
-          data.detections.forEach(det => {
-            html += `Disease: ${det.disease}<br>Confidence: ${det.confidence}<br><br>`;
-          });
+     }
+
+     function toggleVideo() {
+        const img = document.getElementById("photo");
+        if (!streamOn) {
+          img.src = window.location.href.slice(0, -1) + ":81/stream";
+          img.style.display = "block";
         } else {
-          html = "No disease detected.";
+          img.src = "";
+          img.style.display = "none";
         }
-        document.getElementById("result-content").innerHTML = html;
-      })
-      .catch(error => {
-        document.getElementById("result-content").innerHTML = "Detection failed: " + error;
-        console.error("Detection failed:", error);
-      });
-  } 
- 
-  function toggleLED() {
-    toggleCheckbox(ledOn ? 'led_off' : 'led_on');
-    ledOn = !ledOn;
-  }
-   window.onload = document.getElementById("photo").src = window.location.href.slice(0, -1) + ":81/stream";
-  </script>
+        streamOn = !streamOn;
+     }
+
+     function saveIP() {
+        const ip = document.getElementById("server-ip").value;
+        fetch("/set_ip?ip=" + ip)
+          .then(() => {
+            document.getElementById("current-ip").innerText = ip;
+          });
+     }
+
+     function detectLeaf() {
+        fetch("/get_ip")
+          .then(res => res.text())
+          .then(ip => {
+            return fetch("/capture", { method: "GET" })
+              .then(response => response.blob())
+              .then(imageBlob => {
+                const formData = new FormData();
+                formData.append("image", imageBlob, "leaf.jpg");
+                return fetch("http://" + ip + "/detect", {
+                  method: "POST",
+                  body: formData
+                });
+              });
+          })
+          .then(response => response.json())
+          .then(data => {
+            let html = "";
+            if (data.detections && data.detections.length > 0) {
+              data.detections.forEach(det => {
+                html += `Disease: ${det.disease}<br>Confidence: ${det.confidence}<br><br>`;
+              });
+            } else {
+              html = "No disease detected.";
+            }
+            document.getElementById("result-content").innerHTML = html;
+          })
+          .catch(error => {
+            document.getElementById("result-content").innerHTML = "Detection failed: " + error;
+            console.error("Detection failed:", error);
+          });
+     }
+
+     function toggleLED() {
+        toggleCheckbox(ledOn ? 'led_off' : 'led_on');
+        ledOn = !ledOn;
+     }
+
+     window.onload = () => {
+        fetch("/get_ip")
+          .then(res => res.text())
+          .then(ip => {
+            document.getElementById("current-ip").innerText = ip;
+            document.getElementById("server-ip").value = ip;
+          });
+        document.getElementById("photo").src = window.location.href.slice(0, -1) + ":81/stream";
+     }
+   </script>
   </body>
 </html>
 )rawliteral";
@@ -304,7 +247,6 @@ static esp_err_t stream_handler(httpd_req_t *req){
     if(res != ESP_OK){
       break;
     }
-    //Serial.printf("MJPG: %uB\n",(uint32_t)(_jpg_buf_len));
   }
   return res;
 }
@@ -339,60 +281,41 @@ static esp_err_t cmd_handler(httpd_req_t *req){
     return ESP_FAIL;
   }
 
-  int res = 0;
-
   if (!strcmp(variable, "led_on")) {
-    Serial.println("LED ON");
     digitalWrite(LED_PIN, HIGH);
   }
   else if (!strcmp(variable, "led_off")) {
-    Serial.println("LED OFF");
     digitalWrite(LED_PIN, LOW);
   }
-
-
-else if(!strcmp(variable, "forward")) {
-  Serial.println("Forward");
-  digitalWrite(MOTOR_1_PIN_1, HIGH);
-  digitalWrite(MOTOR_1_PIN_2, LOW);
-  digitalWrite(MOTOR_2_PIN_1, HIGH);
-  digitalWrite(MOTOR_2_PIN_2, LOW);
-}
-else if(!strcmp(variable, "backward")) {
-  Serial.println("Backward");
-  digitalWrite(MOTOR_1_PIN_1, LOW);
-  digitalWrite(MOTOR_1_PIN_2, HIGH);
-  digitalWrite(MOTOR_2_PIN_1, LOW);
-  digitalWrite(MOTOR_2_PIN_2, HIGH);
-}
-else if(!strcmp(variable, "left")) {
-  Serial.println("Left");
-  digitalWrite(MOTOR_1_PIN_1, LOW);
-  digitalWrite(MOTOR_1_PIN_2, HIGH);
-  digitalWrite(MOTOR_2_PIN_1, HIGH);
-  digitalWrite(MOTOR_2_PIN_2, LOW);
-}
-else if(!strcmp(variable, "right")) {
-  Serial.println("Right");
-  digitalWrite(MOTOR_1_PIN_1, HIGH);
-  digitalWrite(MOTOR_1_PIN_2, LOW);
-  digitalWrite(MOTOR_2_PIN_1, LOW);
-  digitalWrite(MOTOR_2_PIN_2, HIGH);
-}
-else if(!strcmp(variable, "stop")) {
-  Serial.println("Stop");
-  digitalWrite(MOTOR_1_PIN_1, LOW);
-  digitalWrite(MOTOR_1_PIN_2, LOW);
-  digitalWrite(MOTOR_2_PIN_1, LOW);
-  digitalWrite(MOTOR_2_PIN_2, LOW);
-}
-
-  else {
-    res = -1;
+  else if(!strcmp(variable, "forward")) {
+    digitalWrite(MOTOR_1_PIN_1, HIGH);
+    digitalWrite(MOTOR_1_PIN_2, LOW);
+    digitalWrite(MOTOR_2_PIN_1, HIGH);
+    digitalWrite(MOTOR_2_PIN_2, LOW);
   }
-
-  if(res){
-    return httpd_resp_send_500(req);
+  else if(!strcmp(variable, "backward")) {
+    digitalWrite(MOTOR_1_PIN_1, LOW);
+    digitalWrite(MOTOR_1_PIN_2, HIGH);
+    digitalWrite(MOTOR_2_PIN_1, LOW);
+    digitalWrite(MOTOR_2_PIN_2, HIGH);
+  }
+  else if(!strcmp(variable, "left")) {
+    digitalWrite(MOTOR_1_PIN_1, LOW);
+    digitalWrite(MOTOR_1_PIN_2, HIGH);
+    digitalWrite(MOTOR_2_PIN_1, HIGH);
+    digitalWrite(MOTOR_2_PIN_2, LOW);
+  }
+  else if(!strcmp(variable, "right")) {
+    digitalWrite(MOTOR_1_PIN_1, HIGH);
+    digitalWrite(MOTOR_1_PIN_2, LOW);
+    digitalWrite(MOTOR_2_PIN_1, LOW);
+    digitalWrite(MOTOR_2_PIN_2, HIGH);
+  }
+  else if(!strcmp(variable, "stop")) {
+    digitalWrite(MOTOR_1_PIN_1, LOW);
+    digitalWrite(MOTOR_1_PIN_2, LOW);
+    digitalWrite(MOTOR_2_PIN_1, LOW);
+    digitalWrite(MOTOR_2_PIN_2, LOW);
   }
 
   httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
@@ -402,30 +325,13 @@ else if(!strcmp(variable, "stop")) {
 void startCameraServer(){
   httpd_config_t config = HTTPD_DEFAULT_CONFIG();
   config.server_port = 80;
-  httpd_uri_t index_uri = {
-    .uri       = "/",
-    .method    = HTTP_GET,
-    .handler   = index_handler,
-    .user_ctx  = NULL
-  };
+  httpd_uri_t index_uri = {"/", HTTP_GET, index_handler, NULL};
+  httpd_uri_t cmd_uri = {"/action", HTTP_GET, cmd_handler, NULL};
+  httpd_uri_t stream_uri = {"/stream", HTTP_GET, stream_handler, NULL};
 
-  httpd_uri_t cmd_uri = {
-    .uri       = "/action",
-    .method    = HTTP_GET,
-    .handler   = cmd_handler,
-    .user_ctx  = NULL
-  };
-  httpd_uri_t stream_uri = {
-    .uri       = "/stream",
-    .method    = HTTP_GET,
-    .handler   = stream_handler,
-    .user_ctx  = NULL
-  };
-  // Add capture endpoint
   httpd_uri_t capture_uri = {
-    .uri       = "/capture",
-    .method    = HTTP_GET,
-    .handler   = [](httpd_req_t *req) -> esp_err_t {
+    "/capture", HTTP_GET,
+    [](httpd_req_t *req) -> esp_err_t {
       camera_fb_t *fb = esp_camera_fb_get();
       if (!fb) {
         httpd_resp_send_500(req);
@@ -437,13 +343,45 @@ void startCameraServer(){
       esp_camera_fb_return(fb);
       return res;
     },
-    .user_ctx  = NULL
+    NULL
   };
+
+  // NEW: set_ip and get_ip endpoints
+  httpd_uri_t set_ip_uri = {
+    "/set_ip", HTTP_GET,
+    [](httpd_req_t *req) -> esp_err_t {
+      char buf[64];
+      size_t buf_len = httpd_req_get_url_query_len(req) + 1;
+      if (buf_len > 1 && buf_len < sizeof(buf)) {
+        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
+          char param[64];
+          if (httpd_query_key_value(buf, "ip", param, sizeof(param)) == ESP_OK) {
+            detectionServerIP = String(param);
+            Serial.println("Detection Server IP updated to: " + detectionServerIP);
+          }
+        }
+      }
+      return httpd_resp_send(req, "OK", 2);
+    },
+    NULL
+  };
+
+  httpd_uri_t get_ip_uri = {
+    "/get_ip", HTTP_GET,
+    [](httpd_req_t *req) -> esp_err_t {
+      return httpd_resp_send(req, detectionServerIP.c_str(), detectionServerIP.length());
+    },
+    NULL
+  };
+
   if (httpd_start(&camera_httpd, &config) == ESP_OK) {
     httpd_register_uri_handler(camera_httpd, &index_uri);
     httpd_register_uri_handler(camera_httpd, &cmd_uri);
     httpd_register_uri_handler(camera_httpd, &capture_uri);
+    httpd_register_uri_handler(camera_httpd, &set_ip_uri);
+    httpd_register_uri_handler(camera_httpd, &get_ip_uri);
   }
+
   config.server_port += 1;
   config.ctrl_port += 1;
   if (httpd_start(&stream_httpd, &config) == ESP_OK) {
@@ -451,11 +389,10 @@ void startCameraServer(){
   }
 }
 
-
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);  // Start with LED off
+  digitalWrite(LED_PIN, LOW);
 
   pinMode(MOTOR_1_PIN_1, OUTPUT);
   pinMode(MOTOR_1_PIN_2, OUTPUT);
@@ -463,8 +400,7 @@ void setup() {
   pinMode(MOTOR_2_PIN_2, OUTPUT);
   
   Serial.begin(115200);
-  Serial.setDebugOutput(false);
-  
+
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
@@ -497,28 +433,22 @@ void setup() {
     config.fb_count = 1;
   }
   
-  // Camera init
-  esp_err_t err = esp_camera_init(&config);
-  if (err != ESP_OK) {
-    Serial.printf("Camera init failed with error 0x%x", err);
+  if (esp_camera_init(&config) != ESP_OK) {
+    Serial.println("Camera init failed");
     return;
   }
-  // Wi-Fi connection
+  
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  
+  Serial.println("\nWiFi connected");
   Serial.print("Camera Stream Ready! Go to: http://");
   Serial.println(WiFi.localIP());
   
-  // Start streaming web server
   startCameraServer();
 }
 
 void loop() {
-  
 }
