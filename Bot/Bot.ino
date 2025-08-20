@@ -38,10 +38,10 @@ const char* password = "34563456";
   #error "Camera model not selected"
 #endif
 
-#define MOTOR_1_PIN_1    2   // Left Motor IN1
+#define MOTOR_1_PIN_1    15   // Left Motor IN1
 #define MOTOR_1_PIN_2    13   // Left Motor IN2
 #define MOTOR_2_PIN_1     14  // Right Motor IN3
-#define MOTOR_2_PIN_2    15    // Right Motor IN4
+#define MOTOR_2_PIN_2    12    // Right Motor IN4
 #define LED_PIN          4    // Flash LED
 
 String detectionServerIP = "10.133.183.84:5000";  // default detection server IP
