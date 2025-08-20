@@ -97,13 +97,13 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
 
     </br>
     <table>
-      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');">Forward</button></td></tr>
+      <tr><td colspan="3" align="center"><button class="button" onclick="toggleCheckbox('forward');">Forward</button></td></tr>
       <tr>
-        <td align="center"><button class="button" onmousedown="toggleCheckbox('left');" onmouseup="toggleCheckbox('stop');">Left</button></td>
-        <td align="center"><button class="button" onmousedown="toggleCheckbox('stop');">Stop</button></td>
-        <td align="center"><button class="button" onmousedown="toggleCheckbox('right');" onmouseup="toggleCheckbox('stop');">Right</button></td>
+        <td align="center"><button class="button" onclick="toggleCheckbox('left');">Left</button></td>
+        <td align="center"><button class="button" onclick="toggleCheckbox('stop');">Stop</button></td>
+        <td align="center"><button class="button" onclick="toggleCheckbox('right');">Right</button></td>
       </tr>
-      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" onmouseup="toggleCheckbox('stop');">Backward</button></td></tr>                   
+      <tr><td colspan="3" align="center"><button class="button" onclick="toggleCheckbox('backward');">Backward</button></td></tr>                   
     </table>
 
    <script>
